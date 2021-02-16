@@ -1,0 +1,502 @@
+﻿@page "/banka"
+@using ERacuniNovi.Shared.Models
+@using ERacuniNovi.Shared.Konvertor
+@using Radzen
+@using Grpc.Core
+@using System.Diagnostics
+@using Radzen.Blazor
+@using BillsNamespace
+@using ERacuniNovi.Client.Components
+@using Blazored.FluentValidation
+@using FluentValidation 
+@inject BillsNamespace.BillProtoServis.BillProtoServisClient ServiceBill
+@inject ConvertGRPC ServiceConvert
+
+
+<head>
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css">
+</head>
+
+<!-- #region Dodavanje racuna Banka -->
+<div class="p-4 rounded-lg shadow-inner">
+    <MatAccordion>
+        <MatExpansionPanel @bind-Expanded="@showMatExpansionPanelUplati">
+            <MatExpansionPanelSummary>
+                <MatExpansionPanelHeader><b>Uplati  na racun </b></MatExpansionPanelHeader>
+            </MatExpansionPanelSummary>
+            <MatExpansionPanelDetails>
+                <RadzenFieldset Text="DODAJ NA RAČUN">
+                    <EditForm Model="@RacunZaSlanjeUplati" OnValidSubmit="SubmitRacunBankaUplati">
+                        @*<FluentValidationValidator />*@
+
+                        <div class="row" style="margin-bottom:10px; margin-top:10px">
+                            <div class="col-md-4 align-items-center d-flex">
+                                <RadzenLabel Text="Naziv racuna" />
+                            </div>
+                            <div class="col-md-8">
+                                <RadzenTextBox style="width: 100%;" Name="Naziv" @bind-Value="RacunZaSlanjeUplati.Naziv" />
+                                <ValidationMessage For="@(() => RacunZaSlanjeUplati.Naziv)" />
+                            </div>
+                        </div>
+
+                        <div class="row" style="margin-bottom:10px; margin-top:10px">
+                            <div class="col-md-4 align-items-center d-flex">
+                                <RadzenLabel Text="Adresa Musterije" />
+                            </div>
+                            <div class="col-md-8">
+                                <RadzenTextBox style="width: 100%;" Name="Naziv" @bind-Value="RacunZaSlanjeUplati.AdresaMusterije" />
+                       
+                            </div>
+                        </div>
+
+                        <div class="row" style="margin-bottom:10px; margin-top:10px">
+                            <div class="col-md-4 align-items-center d-flex">
+                                <RadzenLabel Text="Uplaceno" />
+                            </div>
+                            <div class="col-md-8">
+                                <RadzenNumeric style="width: 100%;" Name="Uplaceno" @bind-Value="RacunZaSlanjeUplati.ProdajnaCena" />
+                          
+                            </div>
+                        </div>
+
+
+                        <div class="row" style="margin-bottom:10px; margin-top:10px">
+                            <div class="col-md-4 align-items-center d-flex">
+                                <RadzenLabel Text="Datum uplate" />
+                            </div>
+                            <div class="col-md-8">
+                                <RadzenDatePicker DateFormat="dd/MM/yyyy HH:mm" style="width: 100%;" Name="DatumSlanja" @bind-Value="RacunZaSlanjeUplati.DatumSlanja" />
+             
+                            </div>
+                        </div>
+                        <div class="row" style="margin-bottom:10px; margin-top:10px;">
+                            <div class="col-md-4 align-items-center d-flex">
+                                <MatButton Style="margin-right:10px;" @onclick="CancelSubmitRacun" Icon="cancel" Outlined="true">Otkazi</MatButton>
+                                <MatButton Style="margin-left:10px;" Icon="done" @onsubmit="SubmitRacunBankaUplati" Raised="true">Sacuvaj</MatButton>
+                            </div>
+                        </div>
+                    </EditForm>
+                </RadzenFieldset>
+            </MatExpansionPanelDetails>
+        </MatExpansionPanel>
+
+        <MatExpansionPanel @bind-Expanded="@showMatExpansionPanelPodigni">
+            <MatExpansionPanelSummary>
+                <MatExpansionPanelHeader><b>Podigni sa računa</b></MatExpansionPanelHeader>
+            </MatExpansionPanelSummary>
+            <MatExpansionPanelDetails>
+                <RadzenFieldset Text="PODIGNI NOVAC">
+                    <EditForm Model="@RacunZaSlanjePodigni" OnValidSubmit="SubmitRacunBankaPodigni">
+                        @*<FluentValidationValidator />*@
+
+                        <div class="row" style="margin-bottom:10px; margin-top:10px">
+                            <div class="col-md-4 align-items-center d-flex">
+                                <RadzenLabel Text="Naziv racuna" />
+                            </div>
+                            <div class="col-md-8">
+                                <RadzenTextBox style="width: 100%;" Name="Naziv" @bind-Value="RacunZaSlanjePodigni.Naziv" Disabled="true" Placeholder="UZEO SA RACUNA" />
+                               
+                            </div>
+                        </div>
+
+
+                        <div class="row" style="margin-bottom:10px; margin-top:10px">
+                            <div class="col-md-4 align-items-center d-flex">
+                                <RadzenLabel Text="Podignuto" />
+                            </div>
+                            <div class="col-md-8">
+                                <RadzenNumeric style="width: 100%;" Name="Uplaceno" @bind-Value="RacunZaSlanjePodigni.NabavnaCena" />
+                            </div>
+                        </div>
+        
+                        <div class="row" style="margin-bottom:10px; margin-top:10px">
+                            <div class="col-md-4 align-items-center d-flex">
+                                <RadzenLabel Text="Datum podizanja" />
+                            </div>
+                            <div class="col-md-8">
+                                <RadzenDatePicker DateFormat="dd/MM/yyyy HH:mm" style="width: 100%;" Name="DatumSlanja" @bind-Value="RacunZaSlanjePodigni.DatumSlanja" />
+                               
+                            </div>
+                        </div>
+                        <div class="row" style="margin-bottom:10px; margin-top:10px;">
+                            <div class="col-md-4 align-items-center d-flex">
+                                <MatButton Style="margin-right:10px;" @onclick="CancelSubmitRacun" Icon="cancel" Outlined="true">Otkazi</MatButton>
+                                <MatButton Style="margin-left:10px;" Icon="done" @onsubmit="SubmitRacunBankaPodigni" Raised="true">Sacuvaj</MatButton>
+                            </div>
+                        </div>
+                    </EditForm>
+                </RadzenFieldset>
+            </MatExpansionPanelDetails>
+        </MatExpansionPanel>
+    </MatAccordion>
+</div>
+<!-- #endregion -->
+
+<p>
+    Trenutno stanje je : <b>@ListaRacunaBanka.Sum(b => (b.ProdajnaCena - b.NabavnaCena))</b>
+    
+</p>
+
+<!-- #region Prikazivanje Racuna u tabeli -->
+
+@if (ListaRacunaBanka.Count == 0)
+{
+    <MatProgressBar Indeterminate="true"></MatProgressBar>
+}
+else
+
+{ <div class="p-4 shadow-inner rounded-lg">
+        <RadzenGrid Data="@ListaRacunaBanka" AllowFiltering="true"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    AllowPaging="true"
+                    PageSize="32"
+                    AllowSorting="true"
+                    TItem="Bill"
+                    EmptyText="Nema računa u bazi." ColumnWidth="auto" @ref="RadzenGrid">
+            <Columns>
+
+                <RadzenGridColumn TItem="Bill" Property="Naziv" Title="Naziv racuna" TextAlign="TextAlign.Left">
+                    <Template Context="bill">
+                        @if (bill.Naziv == "UZEO SA RACUNA") // ako je true onda je uplaceno
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="trending_up" Size="ButtonSize.Small" />
+                            @bill.Naziv
+
+                        }
+                        else
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Warning" Icon="trending_down" Size="ButtonSize.Small" />
+                            @bill.Naziv
+                        }
+                    </Template>
+                    
+                    <EditTemplate Context="bill">
+                        @if (bill.Naziv != "UZEO SA RACUNA")
+                        {
+                            <RadzenTextBox @bind-Value="bill.Naziv" Style="width:100%; display: block" />
+
+                        }
+                        else
+                        {
+                            @if (bill.Naziv == "UZEO SA RACUNA") // ako je true onda je uplaceno
+                            {
+                                <RadzenButton ButtonStyle="ButtonStyle.Success" Icon="trending_up" Size="ButtonSize.Small" />
+                                @bill.Naziv
+
+                            }
+                            else
+                            {
+                                <RadzenButton ButtonStyle="ButtonStyle.Warning" Icon="trending_down" Size="ButtonSize.Small" />
+                                @bill.Naziv
+                            }
+                        }
+                    </EditTemplate>
+                </RadzenGridColumn>
+                <RadzenGridColumn TItem="Bill" Property="AdresaMusterije" Title="Adresa mušterije" TextAlign="TextAlign.Center">
+                    <EditTemplate Context="bill">
+                        @if (bill.Naziv != "UZEO SA RACUNA")
+                        {
+                            <RadzenTextBox @bind-Value="bill.AdresaMusterije" Style="width:100%; display: block" Name="AdresaMusterije" />
+                        }
+                        else
+                        {
+                            @bill.AdresaMusterije
+                        }
+                    </EditTemplate>
+                </RadzenGridColumn>
+                <RadzenGridColumn TItem="Bill" Property="ProdajnaCena" Title="Uplaceno" TextAlign="TextAlign.Center" FormatString="{0:#.00}">
+                    <EditTemplate Context="bill">
+                        @if (bill.Naziv != "UZEO SA RACUNA")
+                        {
+                            <RadzenNumeric @bind-Value="bill.ProdajnaCena" Style="width:100%; display: block" Name="Uplaceno" />
+                        }
+                        else
+                        {
+                            @bill.ProdajnaCena
+                        }
+                    </EditTemplate>
+                </RadzenGridColumn>
+                <RadzenGridColumn TItem="Bill" Property="NabavnaCena" Title="Podignuto" TextAlign="TextAlign.Center">
+                    <EditTemplate Context="bill">
+                        @if (bill.Naziv == "UZEO SA RACUNA")
+                        {
+                            <RadzenNumeric @bind-Value="bill.NabavnaCena" Style="width:100%; display: block" Name="Podignuto" />
+                        }
+                        else
+                        {
+                           @bill.NabavnaCena
+                        }
+                    </EditTemplate>
+                </RadzenGridColumn>
+
+
+                <RadzenGridColumn TItem="Bill" Property="DatumSlanja" Title="Datum uplate/podizanja" TextAlign="TextAlign.Center">
+                    <Template Context="bill">
+                        @String.Format("{0:dd/MM/yyyy}", bill.DatumSlanja)
+                    </Template>
+                    <EditTemplate Context="bill">
+                        <RadzenDatePicker @bind-Value="bill.DatumSlanja" Style="width:100%; display: block" />
+                    </EditTemplate>
+                </RadzenGridColumn>
+
+                <RadzenGridColumn Title="Izmeni" TItem="Bill" Bubble="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center">
+                    <Template Context="bill">
+                        <RadzenButton Icon="edit" Size="ButtonSize.Medium" Click="@(args => EditRow(bill))" ButtonStyle="ButtonStyle.Warning" Style="width:100%"></RadzenButton>
+                    </Template>
+                    <EditTemplate Context="bill">
+                        <div class="row">
+                            <div class="col-md-12 align-items-center d-flex">
+                                <RadzenButton Icon="save" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Success" Click="@((args) => SaveRow(bill))" Style="width:50%"></RadzenButton>
+                                <RadzenButton Icon="cancel" Size="ButtonSize.Medium" ButtonStyle="ButtonStyle.Danger" Click="@((args) => CancelEdit(bill))" Style="width:50%"></RadzenButton>
+                            </div>
+                        </div>
+
+
+                    </EditTemplate>
+                </RadzenGridColumn>
+
+                <RadzenGridColumn TItem="Bill" Title="Obriši" Bubble="false" Filterable="false" Sortable="false" TextAlign="TextAlign.Center" Width="auto">
+                    <Template Context="bill">
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="backspace" Size="ButtonSize.Medium" Click=@((args) => CheckForDelete(bill.ID)) Style="width:100%" />
+                    </Template>
+                </RadzenGridColumn>
+            </Columns>
+        </RadzenGrid>
+    </div>
+}
+
+<!-- #endregion -->
+<!-- #region SnackBar -->
+<MatSnackbar @bind-IsOpen="@snackBarIsOpen" Timeout="3000">
+    <MatSnackbarContent><b>Nije dodat u bazu. Proverite Barcode !</b></MatSnackbarContent>
+</MatSnackbar>
+
+<!-- #endregion -->
+<!-- #region MatiDialog -->
+
+<MatDialog IsOpen="IsMatDialogOpen">
+    <MatDialogContent>
+        <RadzenFieldset Text="Razmislite dobro ">
+            <b>Da li ste sigurni da hocete da obrisete ovaj racun?</b>
+        </RadzenFieldset>
+    </MatDialogContent>
+    <MatDialogActions>
+        <div class="p-4 rounded-b-md shadow-inner">
+            <RadzenButton Text="Obrisi" ButtonStyle="ButtonStyle.Danger" Click="()=>DeleteBill(IDzaBrisanje)" Icon="delete"></RadzenButton>
+
+        </div>
+        <div class="p-4 rounded-b-md shadow-inner">
+            <RadzenButton Text="Odustani" ButtonStyle="ButtonStyle.Secondary" Click="()=>IsMatDialogOpen=false" Icon="cancel"></RadzenButton>
+        </div>
+
+    </MatDialogActions>
+</MatDialog>
+
+<!-- #endregion -->
+
+@code {
+    List<Bill> ListaRacunaBanka = new List<Bill>(); //Lista svih racuna za prikaz
+    private Bill RacunZaSlanjeUplati = new Bill(); //Novi racun za dodavanje
+    private Bill RacunZaSlanjePodigni = new Bill(); //Novi racun za dodavanje
+    private Bill PrimljeniRacun = new Bill(); //Racun iz baze konvertovan
+    private Bill CancelEditRacun = new Bill();  //Racun za ShallowCopy
+    private Stopwatch sw = new Stopwatch();
+    RadzenGrid<Bill> RadzenGrid;
+    DateTime defaultDateTime = new DateTime(0001, 1, 1, 0, 0, 0);
+
+    private bool showMatExpansionPanel;
+    private bool showMatExpansionPanelUplati;
+    private bool showMatExpansionPanelPodigni;
+    private bool snackBarIsOpen;
+    private bool IsMatDialogOpen;
+
+    private int IDzaBrisanje;
+
+    #region Uzimanje liste racuna iz baze
+    protected override async Task OnInitializedAsync()
+    {
+        var serverStream = ServiceBill.GetAllBankaBills(new EmptyMsg());  //priprema za preuzimanje sa servera
+        sw.Start();
+        await foreach (var racun in serverStream.ResponseStream.ReadAllAsync())
+        {
+            ListaRacunaBanka.Add(ServiceConvert.ConvertCeoRacun(racun));
+            if (sw.ElapsedMilliseconds == 5)
+            {
+                StateHasChanged();
+            }
+        }
+        sw.Stop();
+        ListaRacunaBanka = ListaRacunaBanka.OrderByDescending(b => (b.DatumSlanja.Date, b.DatumSlanja.TimeOfDay)).ToList();
+        StateHasChanged();
+    }
+
+    #endregion Uzimanje liste racuna iz baze
+
+
+    #region Dodavanje racuna u bazu
+
+    public async Task SubmitRacunBankaUplati()
+    {
+        Console.WriteLine(RacunZaSlanjeUplati.Naziv);
+
+        RacunZaSlanjeUplati.Naziv ??= string.Empty;
+        RacunZaSlanjeUplati.AdresaMusterije ??= string.Empty;
+        if (DateTime.Compare(RacunZaSlanjeUplati.DatumSlanja, defaultDateTime) == 0)
+            RacunZaSlanjeUplati.DatumSlanja = DateTime.Now;
+        RacunZaSlanjeUplati.DatumPrimanja = RacunZaSlanjeUplati.DatumSlanja;
+        Console.WriteLine(RacunZaSlanjeUplati.DatumSlanja);
+
+        Console.WriteLine(RacunZaSlanjeUplati.Naziv);
+        var request = ServiceConvert.ConvertBanka(RacunZaSlanjeUplati);
+
+        var response = await ServiceBill.AddBillBankaAsync(request);
+        if (response.IsUpisan)
+        {
+            PrimljeniRacun = ServiceConvert.ConvertCeoRacun(response.BillResponse);
+
+            //snackBarIsOpen2 = response.Success; //true
+            //messageWhitAddBill = response.Message;
+
+            ListaRacunaBanka.Add(PrimljeniRacun);
+
+            RacunZaSlanjeUplati = new Bill();
+            StateHasChanged();
+            await InvokeAsync(RadzenGrid.Reload);
+        }
+        else
+        {
+            //snackBarIsOpen = true;
+            RacunZaSlanjeUplati = new Bill();
+            StateHasChanged();
+        }
+        ListaRacunaBanka = ListaRacunaBanka.OrderByDescending(b => (b.DatumSlanja.Date, b.DatumSlanja.TimeOfDay)).ToList();
+        CancelSubmitRacun();
+        StateHasChanged();
+    }
+
+    public async Task SubmitRacunBankaPodigni()
+    {
+        Console.WriteLine(RacunZaSlanjePodigni.Naziv);
+        RacunZaSlanjePodigni.Naziv ??= "UZEO SA RACUNA";
+        RacunZaSlanjePodigni.AdresaMusterije ??= string.Empty;
+        if (DateTime.Compare(RacunZaSlanjePodigni.DatumSlanja, defaultDateTime) == 0)
+            RacunZaSlanjePodigni.DatumSlanja = DateTime.Now;
+        RacunZaSlanjePodigni.DatumPrimanja = RacunZaSlanjePodigni.DatumSlanja;
+        Console.WriteLine(RacunZaSlanjePodigni.DatumSlanja);
+
+        Console.WriteLine(RacunZaSlanjePodigni.Naziv);
+        var request = ServiceConvert.ConvertBanka(RacunZaSlanjePodigni);
+
+        var response = await ServiceBill.AddBillBankaAsync(request);
+        if (response.IsUpisan)
+        {
+            PrimljeniRacun = ServiceConvert.ConvertCeoRacun(response.BillResponse);
+
+            //snackBarIsOpen2 = response.Success; //true
+            //messageWhitAddBill = response.Message;
+
+            ListaRacunaBanka.Add(PrimljeniRacun);
+            //showMatExpansionPanel = false;
+            RacunZaSlanjePodigni = new Bill();
+            StateHasChanged();
+            await InvokeAsync(RadzenGrid.Reload);
+        }
+        else
+        {
+            //snackBarIsOpen = true;
+            RacunZaSlanjePodigni = new Bill();
+
+        }
+        ListaRacunaBanka = ListaRacunaBanka.OrderByDescending(b => (b.DatumSlanja.Date, b.DatumSlanja.TimeOfDay)).ToList();
+        CancelSubmitRacun();
+        StateHasChanged();
+    }
+    public void CancelSubmitRacun()
+    {
+        RacunZaSlanjeUplati = new Bill();
+        RacunZaSlanjePodigni = new Bill();
+        showMatExpansionPanelPodigni = false;
+        showMatExpansionPanelUplati = false;
+        StateHasChanged();
+    }
+    #endregion Dodavanje racuna u bazu
+
+    #region Editovanje racuna u Radzenu
+
+    public void EditRow(Bill bill)
+    {
+        Console.WriteLine(bill.ID + " ovo je ID racuna");
+        CancelEditRacun = bill.ShallowCopy(); //ovo je racun pre izmene -- original
+        RadzenGrid.EditRow(bill);
+    }
+    public async void CancelEdit(Bill bill)
+    {
+        RadzenGrid.CancelEditRow(bill); // menjamo bill, njega treba da uklonimo
+
+        ListaRacunaBanka.Where(b => b.ID == CancelEditRacun.ID).FirstOrDefault().Naziv = CancelEditRacun.Naziv;
+        ListaRacunaBanka.Where(b => b.ID == CancelEditRacun.ID).FirstOrDefault().AdresaMusterije = CancelEditRacun.AdresaMusterije;
+        ListaRacunaBanka.Where(b => b.ID == CancelEditRacun.ID).FirstOrDefault().NabavnaCena = CancelEditRacun.NabavnaCena;
+        ListaRacunaBanka.Where(b => b.ID == CancelEditRacun.ID).FirstOrDefault().ProdajnaCena = CancelEditRacun.ProdajnaCena;
+        ListaRacunaBanka.Where(b => b.ID == CancelEditRacun.ID).FirstOrDefault().DatumSlanja = CancelEditRacun.DatumSlanja;
+        ListaRacunaBanka.Where(b => b.ID == CancelEditRacun.ID).FirstOrDefault().DatumPrimanja = CancelEditRacun.DatumPrimanja;
+        StateHasChanged();
+        await InvokeAsync(RadzenGrid.Reload);
+
+
+
+    }
+
+    #endregion Editovanje racuna u Radzenu
+    public async void SaveRow(Bill bill)
+    {
+
+        var response = await ServiceBill.ChangeBillBankaAsync(ServiceConvert.ConvertBanka(bill));
+
+        if (response.IsUpisan)
+        {
+            await RadzenGrid.UpdateRow(bill);
+            ListaRacunaBanka = ListaRacunaBanka.OrderByDescending(b => (b.DatumSlanja.Date, b.DatumSlanja.TimeOfDay)).ToList(); //sortira po desc datum slanja, novi ubaceni su na vrh
+            StateHasChanged();
+
+        }
+        else //ovo se nikad nece desiti jer ce uvek da ga nadje po Barcode-u u bazi i da ga izmeni,nema sansi da ga ne izmeni u bazi
+        {
+            //snackBarIsOpenChanged = true;
+            RadzenGrid.CancelEditRow(bill);
+        }
+        await InvokeAsync(RadzenGrid.Reload);
+
+    }
+
+    #region Brisanje Racuna u Radzenu
+
+    public void CheckForDelete(int ID)
+    {
+        IDzaBrisanje = ID;
+        IsMatDialogOpen = true;
+        StateHasChanged();
+    }
+
+    public async void DeleteBill(int ID)
+    {
+        DeleteBillRequest request = new DeleteBillRequest();
+        request.ID = ID;
+
+        var response = await ServiceBill.DeleteBillAsync(request);
+        if (response.Status == true)
+        {
+            ListaRacunaBanka.Remove(ListaRacunaBanka.Where(b => b.ID == ID).FirstOrDefault());
+            ListaRacunaBanka = ListaRacunaBanka.OrderByDescending(b => (b.DatumSlanja.Date, b.DatumSlanja.TimeOfDay)).ToList(); //sortira po desc datumslanja, novi ubaceni su na vrh
+            IsMatDialogOpen = false;
+            await InvokeAsync(RadzenGrid.Reload);
+        }
+        else
+        {
+            IsMatDialogOpen = false;
+            //snackBarIsOpenDeleted = true;
+        }
+        StateHasChanged();
+    }
+
+    #endregion
+}

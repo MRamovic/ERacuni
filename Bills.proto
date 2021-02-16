@@ -1,0 +1,37 @@
+﻿syntax="proto3";
+option csharp_namespace="BillsNamespace";
+import "google/protobuf/duration.proto";  
+import "google/protobuf/timestamp.proto";
+
+
+message BillPostResponse{
+		BillMsg BillResponse = 2;
+		bool IsUpisan = 1;	
+}
+message EmptyMsg{}
+
+
+
+//SINTAKSA ZA BANKU
+message BankaBillMsg{
+string Naziv=1; //Naziv artikla sta salje
+string AdresaMusterije=2;
+double NabavnaCena=3; //Ono sto mu je uplaceno
+double ProdajnaCena=4; //Ono sto je podigao
+double PresekStanja=5; //KOliko mu je ostalo
+google.protobuf.Timestamp DatumSlanja=6; //kad je prodao
+google.protobuf.Timestamp DatumPrimanja=7; //kad je podigao novac
+int32 ID=8;
+}
+//KRAJ SINTAKSE ZA BANKU
+
+
+
+
+
+//rpc metode za BANKU
+rpc AddBillBanka(BankaBillMsg) returns (BillPostResponse);
+rpc GetAllBankaBills(EmptyMsg) returns (stream BillMsg);
+rpc ChangeBillBanka(BankaBillMsg) returns (BillPostResponse);
+//kraj rpc metode za BANKU
+
